@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>마음 물질</title>
+
+<style>
+html, body {
+  margin: 0; padding: 0;
+  width: 100%; height: 100%;
+  background: #000;
+  overflow: hidden;
+}
+
+#container {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #000;
+}
+
+video {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  background: #000;
+  cursor: pointer;
+}
+
+/* 소리 켜기 버튼 */
+#soundBtn {
+  position: absolute;
+  z-index: 9999;
+  padding: 14px 22px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* 화이트 페이드 */
+#fade {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: white;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.7s ease;
+  z-index: 9000;
+}
+</style>
+</head>
+<body>
+
+<div id="container">
+  <div id="soundBtn">🔊 소리 켜기</div>
+  <video id="video" src="scene0.mp4" autoplay muted></video>
+  <div id="fade"></div>
+</div>
+
+<script>
+const video = document.getElementById("video");
+const soundBtn = document.getElementById("soundBtn");
+const fade = document.getElementById("fade");
+
+let currentScene = 0;
+let soundActivated = false;
+
+/* 전체 화면 */
+function enterFullscreen() {
+  const elem = document.documentElement;
+  if (elem.requestFullscreen) elem.requestFullscreen();
+  else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+}
+
+/* 소리 켜기 */
+soundBtn.addEventListener("click", () => {
+  soundActivated = true;
+  video.muted = false;
+  soundBtn.style.display = "none";
+  enterFullscreen();
+});
+
+/* 화이트 페이드 */
+function whiteFade(callback) {
+  fade.style.opacity = 1;
+  setTimeout(() => {
+    callback();
+    fade.style.opacity = 0;
+  }, 700);
+}
+
+/* 장면 재생 */
+function playScene(num, loop=false) {
+  currentScene = num;
+
+  video.loop = loop;
+
+  whiteFade(() => {
+    video.src = `scene${num}.mp4`;
+
+    if (soundActivated) video.muted = false;
+
+    video.play();
+  });
+}
+
+/* 자동 흐름 */
+video.addEventListener("ended", () => {
+
+  if (currentScene === 0) {
+    playScene(1, false);     // scene1 = 한 번만 재생
+  }
+
+  else if (currentScene === 1) {
+    playScene(0, false);     // 클릭 안 하면 장면 끝나고 scene0으로 복귀
+  }
+
+  else if (currentScene === 3) {
+    playScene(0, false);     // 마지막 장면 끝나면 처음으로
+  }
+});
+
+/* 클릭으로 장면 넘기기 */
+video.addEventListener("click", () => {
+  if (!soundActivated) return;
+
+  if (currentScene === 1) {      // scene1 클릭 시 scene2
+    playScene(2, false);
+  }
+  else if (currentScene === 2) { // scene2 클릭 시 scene3
+    playScene(3, false);
+  }
+});
+</script>
+
+</body>
+</html>
