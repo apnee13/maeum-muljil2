@@ -8,7 +8,7 @@
 html, body {
   margin: 0; padding: 0;
   width: 100%; height: 100%;
-  background: #000;
+  background: #fff; /* 흰색 배경 */
   overflow: hidden;
 }
 
@@ -19,21 +19,22 @@ html, body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #000;
+  background: #fff;
 }
 
 video {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  background: #000;
+  background: #fff; /* ★ 검정 대신 흰색 */
   cursor: pointer;
+  z-index: 1;
 }
 
 /* 소리 켜기 버튼 */
 #soundBtn {
   position: absolute;
-  z-index: 9999;
+  z-index: 99999;
   padding: 14px 22px;
   background: rgba(0, 0, 0, 0.6);
   color: #fff;
@@ -43,25 +44,27 @@ video {
   user-select: none;
 }
 
-/* 화이트 페이드 */
+/* 페이드 화면 (흰색) */
 #fade {
   position: fixed;
   top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: white;
+  width: 100%;
+  height: 100%;
+  background: #fff;
   opacity: 0;
+  transition: opacity 0.8s ease;
   pointer-events: none;
-  transition: opacity 0.7s ease;
-  z-index: 9000;
+  z-index: 9999; /* ★ 항상 영상 위 */
 }
 </style>
 </head>
 <body>
 
+<div id="fade"></div>
+
 <div id="container">
   <div id="soundBtn">🔊 소리 켜기</div>
   <video id="video" src="scene0.mp4" autoplay muted></video>
-  <div id="fade"></div>
 </div>
 
 <script>
@@ -72,71 +75,68 @@ const fade = document.getElementById("fade");
 let currentScene = 0;
 let soundActivated = false;
 
-/* 전체 화면 */
+/* 전체 화면 함수 */
 function enterFullscreen() {
   const elem = document.documentElement;
   if (elem.requestFullscreen) elem.requestFullscreen();
   else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+  else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
 }
 
-/* 소리 켜기 */
+/* 흰색 페이드 인 */
+function fadeIn(callback) {
+  fade.style.opacity = 1;
+  setTimeout(() => {
+    if (callback) callback();
+  }, 800);
+}
+
+/* 흰색 페이드 아웃 */
+function fadeOut() {
+  setTimeout(() => {
+    fade.style.opacity = 0;
+  }, 50);
+}
+
+/* 소리 켜기 버튼 */
 soundBtn.addEventListener("click", () => {
   soundActivated = true;
   video.muted = false;
+  video.volume = 1;
+
   soundBtn.style.display = "none";
   enterFullscreen();
+  video.play();
 });
 
-/* 화이트 페이드 */
-function whiteFade(callback) {
-  fade.style.opacity = 1;
-  setTimeout(() => {
-    callback();
-    fade.style.opacity = 0;
-  }, 700);
-}
-
-/* 장면 재생 */
-function playScene(num, loop=false) {
-  currentScene = num;
-
-  video.loop = loop;
-
-  whiteFade(() => {
+/* 장면 재생 함수 */
+function playScene(num) {
+  fadeIn(() => {
+    currentScene = num;
     video.src = `scene${num}.mp4`;
 
-    if (soundActivated) video.muted = false;
+    if (soundActivated) {
+      video.muted = false;
+      video.volume = 1;
+    }
 
     video.play();
+    fadeOut();
   });
 }
 
-/* 자동 흐름 */
+/* 자동 재생 흐름 */
 video.addEventListener("ended", () => {
-
-  if (currentScene === 0) {
-    playScene(1, false);     // scene1 = 한 번만 재생
-  }
-
-  else if (currentScene === 1) {
-    playScene(0, false);     // 클릭 안 하면 장면 끝나고 scene0으로 복귀
-  }
-
-  else if (currentScene === 3) {
-    playScene(0, false);     // 마지막 장면 끝나면 처음으로
-  }
+  if (currentScene === 0) playScene(1);
+  else if (currentScene === 3) playScene(0);
 });
 
-/* 클릭으로 장면 넘기기 */
+/* 클릭으로 넘기기 */
 video.addEventListener("click", () => {
   if (!soundActivated) return;
 
-  if (currentScene === 1) {      // scene1 클릭 시 scene2
-    playScene(2, false);
-  }
-  else if (currentScene === 2) { // scene2 클릭 시 scene3
-    playScene(3, false);
-  }
+  if (currentScene === 1) playScene(2);
+  else if (currentScene === 2) playScene(3);
 });
 </script>
 
